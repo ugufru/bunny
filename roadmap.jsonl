@@ -1,0 +1,5 @@
+{"rank": 1, "id": 2, "why": "Every drawing issue needs real sprite data, and preview.png checks the palette without the emulator.", "added": "2026-09-14"}
+{"rank": 2, "id": 3, "why": "The core graphics primitive. Proves the data format and 2x scaling on the real mode.", "added": "2026-09-14"}
+{"rank": 3, "id": 4, "why": "Retires the biggest unknown, single-buffer tearing versus page flip, which shapes all later drawing.", "added": "2026-09-14"}
+{"rank": 4, "id": 5, "why": "Retires the second unknown, sound pitch holding during blits, before effects get built on it.", "added": "2026-09-14"}
+{"rank": 5, "id": 6, "why": "Bulk art that unblocks the state machine (#7).", "added": "2026-09-14"}
