@@ -27,7 +27,7 @@
   "anims_doc": "Each entry: [frame, dx, dy, frames to hold, sfx id]. dx and dy are 2x screen pixels applied before the frame is drawn; dx must be a multiple of 4. One hop cycle carries the nose 14 px at 1x (10, 10, 15, 24), so the return to hop1 moves the anchor +28.",
   "anims": {
     "hop": [
-      ["hop2", 0,  0, 6,  0],
+      ["hop2", 0,  0, 6,  1],
       ["hop3", 0,  0, 6,  0],
       ["hop4", 0,  0, 6,  0],
       ["hop1", 28, 0, 24, 0]

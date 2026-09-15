@@ -13,7 +13,7 @@ XROAR_EXTRA ?= -kbd-translate
 
 # coco libraries pulled in through build/coco-libs.fs (bye.fs brings vdg.fs
 # and screen.fs with it).
-COCO_LIBS   = bye.fs
+COCO_LIBS   = wavetable.fs async-sound.fs bye.fs
 
 NAME    = bunny
 SRC     = $(NAME).fs
@@ -53,9 +53,9 @@ $(KERNEL_MAP) $(KERNEL_BIN):
 run: $(BIN)
 	xroar -machine coco2bus -ram 32 $(XROAR_ROMS) $(XROAR_EXTRA) -run $(BIN)
 
-# Headless capture: run with no window or audio, trap at the first N-th call
-# of the kernel vsync (SHOT_AT, default 1), dump RAM and render the CG3 page
-# to build/shot.png. Works when the XRoar window is on another Space.
+# Headless capture: run with no window or audio, trap at the SHOT_AT-th call
+# of the kernel vsync, dump RAM and render the CG3 page to build/shot.png.
+# Works when the XRoar window is on another Space.
 SHOT_AT ?= 1
 VSYNC_PC = $(shell awk '/Symbol: CODE_VSYNC /{print $$NF}' $(KERNEL_MAP))
 
@@ -73,4 +73,4 @@ cycles: $(SRC) $(GEN) $(SPRITES) $(KERNEL_MAP)
 clean:
 	rm -rf build $(BIN)
 
-.PHONY: all preview run cycles clean
+.PHONY: all preview run shot cycles clean

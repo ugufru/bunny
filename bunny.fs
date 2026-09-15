@@ -170,6 +170,27 @@ VARIABLE o-l VARIABLE o-t VARIABLE o-r VARIABLE o-b  \ drawn frame rect
   o-l @ rl @ MAX  o-t @  o-r @ rr @ MIN  rt @ o-b @ MIN  clear-rect
   o-l @ rl @ MAX  rb @ o-t @ MAX  o-r @ rr @ MIN  o-b @  clear-rect ;
 
+\ ---- Sound ---------------------------------------------------------------
+\ lib/async-sound.fs voice with a sine wavetable. The main loop plays
+\ snd-fill samples each frame; anim entries trigger effects by sfx id.
+
+$7000 CONSTANT wave-base   \ sine wavetable, in the heap below the data stack
+
+: snd-setup  ( -- )
+  snd-async-init
+  wave-base DUP gen-sine-hq snd-waveform ;
+
+\ boing - springy metallic sproing on hop takeoff: high sine sweeping up
+\ fast, ring modulated, fading out. Played at 1/3 volume: attenuation 170
+\ (gain 85 of 255), with the fade scaled to match. Ring mod persists in the
+\ library, so effects that don't want it must set 0 snd-ringmod!.
+: boing  ( -- )
+  1400 170 10 snd-note  220 snd-slide!  6 snd-env!
+  9 snd-ringmod! ;
+
+\ sfx - play effect id (1 = boing).
+: sfx  ( id -- )  1 = IF boing THEN ;
+
 \ ---- Bunny ---------------------------------------------------------------
 
 28 CONSTANT hop-start-x    \ leftmost anchor with every hop frame on screen
@@ -205,7 +226,8 @@ VARIABLE ahold             \ frames left on the current entry
   anim-hop aptr !  30 ahold !
   seq-hop spr queue ;
 
-\ advance - read the anim entry at aptr: move the anchor and queue its frame.
+\ advance - read the anim entry at aptr: move the anchor, queue its frame,
+\ start its sound.
 : advance  ( -- )
   aptr @ C@ 255 = IF
     bx @ hop-end-x < IF anim-hop aptr ! ELSE hop-start EXIT THEN
@@ -213,6 +235,7 @@ VARIABLE ahold             \ frames left on the current entry
   aptr @ 1 + C@ sx8 bx +!
   aptr @ 2 + C@ sx8 by +!
   aptr @ 3 + C@ ahold !
+  aptr @ 4 + C@ ?DUP IF sfx THEN
   aptr @ C@ spr queue
   aptr @ 5 + aptr ! ;
 
@@ -223,9 +246,15 @@ VARIABLE ahold             \ frames left on the current entry
 
 : main  ( -- )
   cg3-init
+  snd-setup
   0 drawn !  0 pending !
   hop-start
-  BEGIN vsync draw-pending tick KEY? 3 = UNTIL
+  BEGIN
+    vsync draw-pending snd-frame tick
+    snd-playing? IF 80 snd-fill THEN
+    KEY? 3 =
+  UNTIL
+  snd-stop
   exit-basic ;
 
 main
