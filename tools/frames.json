@@ -44,10 +44,10 @@
   },
   "grass_doc": "Grass strip for the bottom screen rows, at 1x (CG3 pixels): rows tall, base solid rows, blade density per step, fixed seed so it never changes between builds.",
   "grass": {"rows": 16, "base": 2, "density": 0.55, "seed": 3},
-  "anims_doc": "Each entry: [frame, dx, dy, frames to hold, event id], or \"@name\" to splice in another anim. dx and dy are 2x screen pixels applied before the frame is drawn; dx must be a multiple of 4. Events run before the move: 1 boing, 2 carrot bite, 3 carrot appears, 4 next z, 5 clear z, 6 scene reset (clear everything, bunny back to start-x; unused since the hop back), 7 clear the carrot greens and z, 8 sniff, 9 wake chirp. Bites (2) also crunch and each new z (4) also snores. One hop cycle carries the nose 14 px at 1x (10, 10, 15, 24), so the return to hop1 moves the anchor +28. While eating, the bunny steps right after each bite by about what the bite removed from the carrot tip (+8, +12, +4), ending at anchor 80. After waking, hopback turns left and hops back to start-x: a full hop 80 to 52, then a short hop without hop4l (whose left edge needs anchor >= 60) landing at 28, then turns right again. bunny.fs plays anim-show on a loop.",
+  "anims_doc": "Each entry: [frame, dx, dy, frames to hold (0 = random 60..187), event id], or \"@name\" to splice in another anim. dx and dy are 2x screen pixels applied before the frame is drawn; dx must be a multiple of 4. Events run before the move: 1 boing, 2 carrot bite, 3 carrot appears, 4 next z, 5 clear z, 6 scene reset (clear everything, bunny back to start-x; unused since the hop back), 7 clear the carrot greens and z, 8 sniff, 9 wake chirp. Bites (2) also crunch and each new z (4) also snores. One hop cycle carries the nose 14 px at 1x (10, 10, 15, 24), so the return to hop1 moves the anchor +28. While eating, the bunny steps right after each bite by about what the bite removed from the carrot tip (+8, +12, +4), ending at anchor 80. After waking, hopback turns left and hops back to start-x: a full hop 80 to 52, then a short hop without hop4l (whose left edge needs anchor >= 60) landing at 28, then turns right again. bunny.fs plays anim-show on a loop.",
   "anims": {
     "sit": [
-      ["hop1", 0, 0, 60, 7]
+      ["hop1", 0, 0, 0, 7]
     ],
     "wiggle": [
       ["wiggle", 0, 0, 5, 8],

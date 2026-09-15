@@ -344,13 +344,14 @@ VARIABLE carrot-was        \ carrot sprite before the last change, 0 = none
   drawn @ AND ;
 
 \ advance - run the anim entry at aptr: event, move the anchor, queue its
-\ frame unless it is already on screen. anim-show loops forever.
+\ frame unless it is already on screen. A hold of 0 means a random
+\ 60..187 frames (kernel rnd wants a power of two). anim-show loops forever.
 : advance  ( -- )
   aptr @ C@ 255 = IF anim-show aptr ! THEN
   aptr @ 4 + C@ ?DUP IF event THEN
   aptr @ 1 + C@ sx8 bx +!
   aptr @ 2 + C@ sx8 by +!
-  aptr @ 3 + C@ ahold !
+  aptr @ 3 + C@ ?DUP 0= IF 128 rnd 60 + THEN ahold !
   aptr @ C@ spr DUP same-frame? IF DROP ELSE queue THEN
   aptr @ 5 + aptr ! ;
 
