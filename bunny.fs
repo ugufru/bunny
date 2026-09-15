@@ -15,8 +15,8 @@ $C8  CONSTANT cg3-pia
 VARIABLE vram       \ base address of the displayed CG3 page
 VARIABLE dbl-tab    \ address of dbl-table, read by blit2x
 VARIABLE blt-dst    \ blit2x scratch: current destination row
-VARIABLE blt-w      \ blit2x scratch: source bytes per row
-VARIABLE blt-h      \ blit2x scratch: source rows left
+VARIABLE blt-w      \ blit2x / clear-rect scratch: bytes per row
+VARIABLE blt-h      \ blit2x / clear-rect scratch: rows left
 
 \ cg3-init - point the SAM at vram-base, select CG3 CSS=1, clear to buff.
 : cg3-init  ( -- )
@@ -94,11 +94,138 @@ CODE blit2x  \ ( spr x y flags -- )
         ;NEXT
 ;CODE
 
+\ clear-rect - fill screen pixels l..r-1 x t..b-1 with buff. l and r are
+\ multiples of 4. Does nothing when r <= l or b <= t.
+CODE clear-rect  \ ( l t r b -- )
+        PSHS    X,U
+        LDD     2,U             ; r
+        SUBD    6,U             ; r - l
+        BLE     @done
+        ASRA
+        RORB
+        ASRA
+        RORB                    ; bytes per row
+        STB     FVAR_blt_w+1
+        LDD     ,U              ; b
+        SUBD    4,U             ; b - t
+        BLE     @done
+        STB     FVAR_blt_h+1
+        LDD     4,U             ; t
+        ASLB
+        ROLA
+        ASLB
+        ROLA
+        ASLB
+        ROLA
+        ASLB
+        ROLA
+        ASLB
+        ROLA                    ; D = t * 32
+        ADDD    FVAR_vram
+        TFR     D,X
+        LDD     6,U             ; l
+        ASRA
+        RORB
+        ASRA
+        RORB
+        LEAX    D,X             ; X = first byte of the first row
+        CLRA
+@row    LDB     FVAR_blt_w+1
+        TFR     X,Y
+@byte   STA     ,Y+
+        DECB
+        BNE     @byte
+        LEAX    32,X
+        DEC     FVAR_blt_h+1
+        BNE     @row
+@done   PULS    X,U
+        LEAU    8,U
+        ;NEXT
+;CODE
+
+\ ---- Sprite rectangles -------------------------------------------------
+
+VARIABLE rs  VARIABLE rx  VARIABLE ry          \ rect! inputs
+VARIABLE rl  VARIABLE rt  VARIABLE rr  VARIABLE rb   \ new frame rect
+VARIABLE o-l VARIABLE o-t VARIABLE o-r VARIABLE o-b  \ drawn frame rect
+
+\ sx8 - sign-extend a byte.
+: sx8  ( c -- n )  DUP 127 > IF 256 - THEN ;
+
+\ rect! - screen rectangle of sprite spr anchored at x,y, into rl rt rr rb.
+: rect!  ( spr x y -- )
+  ry ! rx ! rs !
+  rs @ 2 + C@ sx8 2* rx @ + rl !
+  rs @ 3 + C@ sx8 2* ry @ + rt !
+  rs @ C@ 2* rl @ + rr !
+  rs @ 1 + C@ 2* rt @ + rb ! ;
+
+\ rect>old - remember the new rect as the drawn one.
+: rect>old  ( -- )  rl @ o-l !  rt @ o-t !  rr @ o-r !  rb @ o-b ! ;
+
+\ erase-uncovered - clear the parts of the drawn rect outside the new rect.
+: erase-uncovered  ( -- )
+  o-l @  o-t @  rl @ o-r @ MIN  o-b @  clear-rect
+  rr @ o-l @ MAX  o-t @  o-r @  o-b @  clear-rect
+  o-l @ rl @ MAX  o-t @  o-r @ rr @ MIN  rt @ o-b @ MIN  clear-rect
+  o-l @ rl @ MAX  rb @ o-t @ MAX  o-r @ rr @ MIN  o-b @  clear-rect ;
+
+\ ---- Bunny ---------------------------------------------------------------
+
+28 CONSTANT hop-start-x    \ leftmost anchor with every hop frame on screen
+84 CONSTANT hop-end-x      \ rightmost anchor where hop4 still fits
+80 CONSTANT ground-y
+
+VARIABLE bx  VARIABLE by   \ bunny anchor (screen pixels)
+VARIABLE drawn             \ true once a frame is on screen
+VARIABLE pending           \ sprite to draw after the next vsync, 0 = none
+VARIABLE aptr              \ current anim entry
+VARIABLE ahold             \ frames left on the current entry
+
+\ Drawing is split around vsync so the blit starts as soon as the beam
+\ leaves the screen: all Forth bookkeeping (entry, anchor, rect!) happens
+\ before vsync in tick, and draw-pending only blits and erases after it.
+\ The erase can follow the blit because it only touches pixels outside the
+\ new frame.
+
+\ queue - make spr the frame to draw at the current anchor.
+: queue  ( spr -- )  DUP pending !  bx @ by @ rect! ;
+
+\ draw-pending - right after vsync: blit the queued frame, erase leftovers.
+: draw-pending  ( -- )
+  pending @ ?DUP IF
+    bx @ by @ 0 blit2x
+    drawn @ IF erase-uncovered THEN
+    rect>old  1 drawn !  0 pending !
+  THEN ;
+
+\ hop-start - sit the bunny at the left edge and rewind the hop anim.
+: hop-start  ( -- )
+  hop-start-x bx !  ground-y by !
+  anim-hop aptr !  30 ahold !
+  seq-hop spr queue ;
+
+\ advance - read the anim entry at aptr: move the anchor and queue its frame.
+: advance  ( -- )
+  aptr @ C@ 255 = IF
+    bx @ hop-end-x < IF anim-hop aptr ! ELSE hop-start EXIT THEN
+  THEN
+  aptr @ 1 + C@ sx8 bx +!
+  aptr @ 2 + C@ sx8 by +!
+  aptr @ 3 + C@ ahold !
+  aptr @ C@ spr queue
+  aptr @ 5 + aptr ! ;
+
+\ tick - once per frame, before vsync: step the anim when its hold runs out.
+: tick  ( -- )
+  ahold @ 1 - DUP ahold !
+  0= IF advance THEN ;
+
 : main  ( -- )
   cg3-init
-  seq-hop spr    32 80 0 blit2x
-  seq-munch spr  96 80 0 blit2x
-  BEGIN vsync KEY? 3 = UNTIL
+  0 drawn !  0 pending !
+  hop-start
+  BEGIN vsync draw-pending tick KEY? 3 = UNTIL
   exit-basic ;
 
 main

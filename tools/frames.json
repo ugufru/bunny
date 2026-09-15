@@ -8,7 +8,8 @@
     "2": [[214, 179, 157], [188, 139, 109], [196, 145, 114]],
     "3": [[205, 174, 103]]
   },
-  "preview_rgb": [[255, 240, 190], [70, 205, 235], [215, 75, 215], [250, 140, 40]],
+  "preview_rgb_doc": "CSS=1 colors as XRoar renders them (sampled from a live window capture).",
+  "preview_rgb": [[255, 255, 255], [88, 170, 120], [236, 102, 248], [238, 121, 74]],
   "frames": [
     {"name": "hop1",   "box": [28, 218, 25, 27],  "cell_x": 24},
     {"name": "hop2",   "box": [59, 216, 26, 28],  "cell_x": 56},
@@ -22,5 +23,14 @@
   "sequences": {
     "hop":   ["hop1", "hop2", "hop3", "hop4"],
     "munch": ["munch1", "munch2", "munch3", "munch4"]
+  },
+  "anims_doc": "Each entry: [frame, dx, dy, frames to hold, sfx id]. dx and dy are 2x screen pixels applied before the frame is drawn; dx must be a multiple of 4. One hop cycle carries the nose 14 px at 1x (10, 10, 15, 24), so the return to hop1 moves the anchor +28.",
+  "anims": {
+    "hop": [
+      ["hop2", 0,  0, 6,  0],
+      ["hop3", 0,  0, 6,  0],
+      ["hop4", 0,  0, 6,  0],
+      ["hop1", 28, 0, 24, 0]
+    ]
   }
 }

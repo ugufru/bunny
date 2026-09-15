@@ -1,3 +1,2 @@
-{"rank": 1, "id": 4, "why": "Retires the biggest unknown, single-buffer tearing versus page flip, which shapes all later drawing.", "added": "2026-09-14"}
-{"rank": 2, "id": 5, "why": "Retires the second unknown, sound pitch holding during blits, before effects get built on it.", "added": "2026-09-14"}
-{"rank": 3, "id": 6, "why": "Bulk art that unblocks the state machine (#7).", "added": "2026-09-14"}
+{"rank": 1, "id": 5, "why": "Retires the second unknown, sound pitch holding during blits, before effects get built on it.", "added": "2026-09-14"}
+{"rank": 2, "id": 6, "why": "Bulk art that unblocks the state machine (#7).", "added": "2026-09-14"}

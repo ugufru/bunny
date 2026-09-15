@@ -63,7 +63,7 @@ shot: $(BIN)
 	rm -f build/shot.ram
 	perl -e 'alarm 60; exec @ARGV' xroar -machine coco2bus -ram 32 $(XROAR_ROMS) \
 	    -ui null -ao null -run $(BIN) \
-	    -trap pc=0x$(VSYNC_PC) -trap-range $(SHOT_AT) \
+	    -trap pc=0x$(VSYNC_PC) -trap-range $(SHOT_AT)-$(SHOT_AT) \
 	    -trap-snap build/shot.ram -trap-timeout 1 -timeout 50 > build/shot.log 2>&1
 	python3 tools/cg3shot.py build/shot.ram build/shot.png
 

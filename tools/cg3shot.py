@@ -4,16 +4,16 @@
 Usage: python3 tools/cg3shot.py build/shot.ram build/shot.png [base] [scale]
 
 base defaults to $0600 (vram-base). The dump is a raw image of RAM from
-address 0. Colors are CSS=1 (buff, cyan, magenta, orange), matching
-tools/frames.json preview_rgb. A 4 px border is drawn in buff, as on the
-real screen.
+address 0. Colors are CSS=1 (buff, cyan, magenta, orange) as XRoar renders
+them, matching tools/frames.json preview_rgb. A 4 px border is drawn in
+buff, as on the real screen.
 """
 
 import sys
 
 from PIL import Image
 
-RGB = [(255, 240, 190), (70, 205, 235), (215, 75, 215), (250, 140, 40)]
+RGB = [(255, 255, 255), (88, 170, 120), (236, 102, 248), (238, 121, 74)]
 W, H, BYTES_PER_ROW = 128, 96, 32
 
 
