@@ -5,7 +5,7 @@ A Color Computer 1/2 demo: a white LPC-style bunny on a white CG3 screen
 a carrot, eats it, yawns, falls asleep, wakes up and hops back home, with
 sound effects playing while it animates.
 
-![bunny eating the carrot](screenshot.png)
+![bunny demo running in XRoar: sit, hop, eat the carrot, nap, hop home](bunny.gif)
 
 Written in Forth using the kernel and cross-compiler from the coco project.
 
@@ -70,8 +70,8 @@ The code (Forth, assembly, Python tools, Makefile) is under the BSD 2-Clause
 license in `LICENSE`, the same license as the coco project.
 
 The art is not: the bunny sprite sheet and the frames derived from it
-(`assets/`, `screenshot.png`, and the sprite data generated from them) are
-under CC-BY-SA 3.0. See `CREDITS.md`.
+(`assets/`, `screenshot.png`, `bunny.gif`, `bunny.mov`, and the sprite data
+generated from them) are under CC-BY-SA 3.0. See `CREDITS.md`.
 
 ## Credits
 
