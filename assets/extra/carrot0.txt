@@ -1,0 +1,9 @@
+# carrot0 - only the greens are left.
+# . = transparent (buff), c = cyan (renders green), o = orange
+..............c.
+............c.cc
+............cc..
+............cccc
+............cc..
+............c.cc
+..............c.

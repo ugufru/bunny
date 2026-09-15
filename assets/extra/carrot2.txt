@@ -1,0 +1,9 @@
+# carrot2 - one bite gone from the tip.
+# . = transparent (buff), c = cyan (renders green), o = orange
+..............c.
+.........oooc.cc
+......oooooocc..
+.....ooooooocccc
+......oooooocc..
+.........oooc.cc
+..............c.

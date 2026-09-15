@@ -1,0 +1,9 @@
+# carrot1 - a stub of carrot left under the greens.
+# . = transparent (buff), c = cyan (renders green), o = orange
+..............c.
+..........ooc.cc
+..........oocc..
+..........oocccc
+..........oocc..
+..........ooc.cc
+..............c.

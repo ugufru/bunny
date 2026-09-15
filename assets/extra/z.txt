@@ -1,0 +1,7 @@
+# z - sleep glyph.
+# . = transparent (buff), c = cyan
+ccccc
+...c.
+..c..
+.c...
+ccccc

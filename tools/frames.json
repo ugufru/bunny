@@ -18,11 +18,22 @@
     {"name": "munch1", "box": [179, 218, 26, 25], "cell_x": 176},
     {"name": "munch2", "box": [210, 221, 27, 22], "cell_x": 208},
     {"name": "munch3", "box": [243, 224, 28, 19], "cell_x": 240},
-    {"name": "munch4", "box": [275, 224, 28, 19], "cell_x": 272}
+    {"name": "munch4", "box": [275, 224, 28, 19], "cell_x": 272},
+    {"name": "wiggle",  "art": "assets/extra/wiggle.txt",  "like": "hop1"},
+    {"name": "yawn",    "art": "assets/extra/yawn.txt",    "like": "hop1"},
+    {"name": "sleep",   "art": "assets/extra/sleep.txt",   "like": "munch4"},
+    {"name": "carrot3", "art": "assets/extra/carrot3.txt", "ox": 0, "oy": -7},
+    {"name": "carrot2", "art": "assets/extra/carrot2.txt", "ox": 0, "oy": -7},
+    {"name": "carrot1", "art": "assets/extra/carrot1.txt", "ox": 0, "oy": -7},
+    {"name": "carrot0", "art": "assets/extra/carrot0.txt", "ox": 0, "oy": -7},
+    {"name": "z",       "art": "assets/extra/z.txt",       "ox": 0, "oy": -5}
   ],
+  "art_doc": "art frames are ASCII pixel maps (. or w = buff, c = cyan, m = magenta, o = orange; # lines are comments). like = use that sheet frame's anchor offset; otherwise ox/oy give the top-left offset from the anchor in 1x pixels.",
   "sequences": {
-    "hop":   ["hop1", "hop2", "hop3", "hop4"],
-    "munch": ["munch1", "munch2", "munch3", "munch4"]
+    "hop":    ["hop1", "hop2", "hop3", "hop4"],
+    "munch":  ["munch1", "munch2", "munch3", "munch4"],
+    "rest":   ["hop1", "wiggle", "yawn", "sleep"],
+    "carrot": ["carrot3", "carrot2", "carrot1", "carrot0", "z"]
   },
   "anims_doc": "Each entry: [frame, dx, dy, frames to hold, sfx id]. dx and dy are 2x screen pixels applied before the frame is drawn; dx must be a multiple of 4. One hop cycle carries the nose 14 px at 1x (10, 10, 15, 24), so the return to hop1 moves the anchor +28.",
   "anims": {

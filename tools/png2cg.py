@@ -44,11 +44,62 @@ def nearest(rgb, table):
                key=lambda kv: sum((a - b) ** 2 for a, b in zip(kv[0], rgb)))[1]
 
 
-def convert_frame(sheet, frame, cfg, table, unmapped):
+ART_CODES = {".": 0, "w": 0, "c": 1, "m": 2, "o": 3}
+
+
+def frame_by_name(cfg, name):
+    for f in cfg["frames"]:
+        if f["name"] == name:
+            return f
+    sys.exit(f"no frame named {name}")
+
+
+def sheet_offset(frame, cfg):
+    """Top-left of a sheet frame relative to its anchor, in 1x pixels."""
+    x, y = frame["box"][0], frame["box"][1]
+    return x - (frame["cell_x"] + cfg["cell_w"] // 2), y - cfg["baseline_y"]
+
+
+def read_art(path):
+    rows = [line.rstrip("\n") for line in open(path)
+            if line.strip() and not line.startswith("#")]
+    w = max(len(r) for r in rows)
+    try:
+        return [[ART_CODES[ch] for ch in r.ljust(w, ".")] for r in rows]
+    except KeyError as e:
+        sys.exit(f"{path}: unknown pixel character {e}")
+
+
+def source_pixels(sheet, frame, cfg, table, unmapped):
+    """Rows of 2-bit codes plus the unpadded ox, oy for a sheet or art frame."""
+    if "art" in frame:
+        rows = read_art(frame["art"])
+        if "like" in frame:
+            ox, oy = sheet_offset(frame_by_name(cfg, frame["like"]), cfg)
+        else:
+            ox, oy = frame["ox"], frame["oy"]
+        return rows, ox, oy
     x, y, w, h = frame["box"]
-    anchor_x = frame["cell_x"] + cfg["cell_w"] // 2
-    ox = x - anchor_x
-    oy = y - cfg["baseline_y"]
+    rows = []
+    for yy in range(h):
+        row = []
+        for xx in range(w):
+            r, g, b, a = sheet.getpixel((x + xx, y + yy))
+            code = 0
+            if a:
+                code = table.get((r, g, b))
+                if code is None:
+                    unmapped.add((r, g, b))
+                    code = nearest((r, g, b), table)
+            row.append(code)
+        rows.append(row)
+    ox, oy = sheet_offset(frame, cfg)
+    return rows, ox, oy
+
+
+def convert_frame(sheet, frame, cfg, table, unmapped):
+    src, ox, oy = source_pixels(sheet, frame, cfg, table, unmapped)
+    h, w = len(src), len(src[0])
     lead = 0
     if ox % 2:
         ox -= 1
@@ -56,17 +107,7 @@ def convert_frame(sheet, frame, cfg, table, unmapped):
     pw = w + lead
     pw += (-pw) % 4
 
-    pixels = [[0] * pw for _ in range(h)]
-    for yy in range(h):
-        for xx in range(w):
-            r, g, b, a = sheet.getpixel((x + xx, y + yy))
-            if not a:
-                continue
-            code = table.get((r, g, b))
-            if code is None:
-                unmapped.add((r, g, b))
-                code = nearest((r, g, b), table)
-            pixels[yy][lead + xx] = code
+    pixels = [[0] * lead + row + [0] * (pw - w - lead) for row in src]
 
     data = bytearray([pw, h, ox & 0xFF, oy & 0xFF])
     for row in pixels:

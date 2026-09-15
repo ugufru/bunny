@@ -1,0 +1,9 @@
+# carrot3 - whole carrot lying down, tip pointing left at the bunny.
+# . = transparent (buff), c = cyan (renders green), o = orange
+..............c.
+.........oooc.cc
+....oooooooocc..
+oooooooooooocccc
+....oooooooocc..
+.........oooc.cc
+..............c.

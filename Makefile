@@ -33,7 +33,7 @@ $(GEN): Makefile | build
 	printf 'INCLUDE $(COCO)/lib/%s\n' $(COCO_LIBS) > $@
 
 # Sprite data and its preview image come from one converter run.
-$(SPRITES): tools/png2cg.py tools/frames.json assets/bunnysheet5.png | build
+$(SPRITES): tools/png2cg.py tools/frames.json assets/bunnysheet5.png $(wildcard assets/extra/*.txt) | build
 	python3 tools/png2cg.py tools/frames.json build
 
 $(PREVIEW): $(SPRITES)
