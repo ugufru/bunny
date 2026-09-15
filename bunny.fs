@@ -32,7 +32,8 @@ VARIABLE blt-h      \ blit2x / clear-rect scratch: rows left
 \ The record's top-left lands at (x + 2*ox, y + 2*oy); x must be a multiple
 \ of 4 (ox is always even) and the sprite must fit on screen: no clipping.
 \ Each source row is written to two screen rows, each source byte to two
-\ screen bytes through dbl-table. flags is reserved for mirroring (#8).
+\ screen bytes through dbl-table. flags is unused: left-facing frames are
+\ separate mirrored records made by tools/png2cg.py.
 CODE blit2x  \ ( spr x y flags -- )
         PSHS    X,U
         LDY     6,U             ; Y = sprite record
@@ -247,6 +248,12 @@ VARIABLE carrot-was        \ carrot sprite before the last change, 0 = none
   z-clear
   start-x bx !  ground-y by ! ;
 
+\ carrot-clear - erase the carrot (or its greens) and any z.
+: carrot-clear  ( -- )
+  carrot @ IF carrot-x ground-y 14 -  carrot-x 32 +  ground-y clear-rect THEN
+  0 carrot !  0 carrot-was !
+  z-clear ;
+
 \ event - run an anim entry's event id.
 : event  ( id -- )
   DUP 1 = IF boing THEN
@@ -254,7 +261,8 @@ VARIABLE carrot-was        \ carrot sprite before the last change, 0 = none
   DUP 3 = IF spr-carrot3 carrot-show THEN
   DUP 4 = IF z-next THEN
   DUP 5 = IF z-clear THEN
-  6 = IF scene-reset THEN ;
+  DUP 6 = IF scene-reset THEN
+  7 = IF carrot-clear THEN ;
 
 \ Drawing is split around vsync so the blit starts as soon as the beam
 \ leaves the screen: all Forth bookkeeping (entry, anchor, rect!) happens

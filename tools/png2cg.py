@@ -129,6 +129,16 @@ def convert_frame(sheet, frame, cfg, table, unmapped):
             "pixels": pixels, "data": bytes(data)}
 
 
+def mirror_frame(base, name):
+    """base flipped left to right; the anchor stays at the same screen x."""
+    pixels = [row[::-1] for row in base["pixels"]]
+    w, h = base["w"], base["h"]
+    ox, oy = -(base["ox"] + w), base["oy"]
+    data = bytearray([w, h, ox & 0xFF, oy & 0xFF]) + pack_rows(pixels)
+    return {"name": name, "w": w, "h": h, "ox": ox, "oy": oy,
+            "pixels": pixels, "data": bytes(data)}
+
+
 def grass_rows(spec):
     """Rows of 2-bit codes, 128 wide: solid cyan base rows plus random blades."""
     import random
@@ -261,7 +271,15 @@ def main():
     sheet = Image.open(cfg["sheet"]).convert("RGBA")
     table = build_color_map(cfg["colors"])
     unmapped = set()
-    frames = [convert_frame(sheet, f, cfg, table, unmapped) for f in cfg["frames"]]
+    frames = []
+    for f in cfg["frames"]:
+        if "mirror" in f:
+            base = next((c for c in frames if c["name"] == f["mirror"]), None)
+            if base is None:
+                sys.exit(f"mirror {f['name']}: {f['mirror']} must be listed earlier")
+            frames.append(mirror_frame(base, f["name"]))
+        else:
+            frames.append(convert_frame(sheet, f, cfg, table, unmapped))
 
     outdir.mkdir(parents=True, exist_ok=True)
     write_forth(outdir / "sprites.fs", frames, cfg["sequences"], cfg.get("anims", {}), cfg.get("grass"))
