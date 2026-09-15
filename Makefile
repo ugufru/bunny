@@ -70,7 +70,14 @@ shot: $(BIN)
 cycles: $(SRC) $(GEN) $(SPRITES) $(KERNEL_MAP)
 	$(FC) $(SRC) --kernel $(KERNEL_MAP) --cycles --output build/cycles.bin
 
+# Issue tracker page, rebuilt whenever the tracker or roadmap changes.
+# issues.html is committed, not a build product.
+issues: issues.html
+
+issues.html: issues.jsonl roadmap.jsonl tools/issues_html.py
+	python3 tools/issues_html.py render issues.jsonl issues.html roadmap.jsonl --title="bunny issues"
+
 clean:
 	rm -rf build $(BIN)
 
-.PHONY: all preview run shot cycles clean
+.PHONY: all preview run shot cycles issues clean

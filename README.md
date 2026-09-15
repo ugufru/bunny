@@ -38,6 +38,7 @@ make preview          # opens build/preview.png, every sprite frame at 4x
 make shot SHOT_AT=240 # headless: renders screen memory at main loop pass 240
                       # to build/shot.png
 make cycles           # fc.py cycle estimates per word
+make issues           # rebuilds issues.html from issues.jsonl and roadmap.jsonl
 make clean
 ```
 
