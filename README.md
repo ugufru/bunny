@@ -24,7 +24,8 @@ Press BREAK to return to BASIC.
 
 ## Requirements
 
-- A checkout of the coco project at `~/github/coco` (or set `COCO=...`)
+- A checkout of the coco project (https://github.com/ugufru/coco) at
+  `~/github/coco` (or set `COCO=...`). Tested with coco commit `b5158e6`.
 - `lwasm` (to build the kernel if it isn't built yet)
 - Python 3 with Pillow (sprite converter)
 - XRoar with `bas12.rom` and `extbas11.rom` in `~/.xroar/roms/`
@@ -62,6 +63,15 @@ make clean
 - `PLAN.md`: the original design notes.
 - `issues.jsonl`, `roadmap.jsonl`, `issues.html`: work tracking.
 - `CREDITS.md`: art attribution and licenses.
+
+## License
+
+The code (Forth, assembly, Python tools, Makefile) is under the BSD 2-Clause
+license in `LICENSE`, the same license as the coco project.
+
+The art is not: the bunny sprite sheet and the frames derived from it
+(`assets/`, `screenshot.png`, and the sprite data generated from them) are
+under CC-BY-SA 3.0. See `CREDITS.md`.
 
 ## Credits
 
