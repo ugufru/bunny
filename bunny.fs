@@ -173,8 +173,9 @@ VARIABLE o-l VARIABLE o-t VARIABLE o-r VARIABLE o-b  \ drawn frame rect
   o-l @ rl @ MAX  rb @ o-t @ MAX  o-r @ rr @ MIN  o-b @  clear-rect ;
 
 \ ---- Sound ---------------------------------------------------------------
-\ lib/async-sound.fs voice with a sine wavetable. The main loop plays
-\ snd-fill samples each frame; anim entries trigger effects by sfx id.
+\ lib/async-sound.fs voice with a sine wavetable, plus noise bursts. The
+\ main loop's sound-step plays a noise burst while one is running, otherwise
+\ snd-fill samples for the voice. Anim events trigger the effects.
 
 $7000 CONSTANT wave-base   \ sine wavetable, in the heap below the data stack
 
@@ -182,13 +183,50 @@ $7000 CONSTANT wave-base   \ sine wavetable, in the heap below the data stack
   snd-async-init
   wave-base DUP gen-sine-hq snd-waveform ;
 
+VARIABLE noise-left   \ frames left in the current noise burst, 0 = none
+VARIABLE noise-n      \ noise samples per frame
+VARIABLE noise-fade   \ attenuation added per frame (fade out)
+
+\ voice - get the tone voice ready: cancel any noise burst, sine wavetable,
+\ ring mod off. snd-noise-fill shares snd-amp with the voice, so only one
+\ of them may run at a time; ring mod and waveform persist in the library.
+: voice  ( -- )  0 noise-left !  wave-base snd-waveform  0 snd-ringmod! ;
+
+\ noise - start a noise burst; stops the voice.
+\   frames  burst length   n     samples per frame   div  lines per sample
+\   amp     attenuation    fade  attenuation added per frame
+: noise  ( frames n div amp fade -- )
+  snd-stop  noise-fade !  snd-amp !  snd-noise-div !  noise-n !  noise-left ! ;
+
+\ sound-step - once per frame: noise burst if running, else the voice.
+: sound-step  ( -- )
+  noise-left @ IF
+    noise-n @ snd-noise-fill
+    snd-amp @ noise-fade @ + 255 MIN snd-amp !
+    noise-left @ 1 - noise-left !
+  ELSE
+    snd-playing? IF 80 snd-fill THEN
+  THEN ;
+
+\ All effects are quiet: attenuation 140..190 of 255.
+
 \ boing - springy metallic sproing on hop takeoff: high sine sweeping up
-\ fast, ring modulated, fading out. Played at 1/3 volume: attenuation 170
-\ (gain 85 of 255), with the fade scaled to match. Ring mod persists in the
-\ library, so effects that don't want it must set 0 snd-ringmod!.
+\ fast, ring modulated, fading out.
 : boing  ( -- )
-  1400 170 10 snd-note  220 snd-slide!  6 snd-env!
-  9 snd-ringmod! ;
+  voice  1400 170 10 snd-note  220 snd-slide!  6 snd-env!  9 snd-ringmod! ;
+
+\ snore - low triangle that fades, with each new z.
+: snore  ( -- )
+  voice  3 snd-shape  110 190 24 snd-note  2 snd-slide!  3 snd-env! ;
+
+\ chirp - quick rising sine when the bunny wakes.
+: chirp  ( -- )  voice  1800 180 8 snd-note  160 snd-slide!  8 snd-env! ;
+
+\ sniff - short bright noise tick on a nose wiggle.
+: sniff  ( -- )  3 24 1 190 10 noise ;
+
+\ crunch - lower noise burst that fades, on a carrot bite.
+: crunch  ( -- )  6 40 2 140 18 noise ;
 
 \ ---- Scene ---------------------------------------------------------------
 \ At 2x the anchor can range 28..84 before a frame leaves the screen. The
@@ -257,12 +295,14 @@ VARIABLE carrot-was        \ carrot sprite before the last change, 0 = none
 \ event - run an anim entry's event id.
 : event  ( id -- )
   DUP 1 = IF boing THEN
-  DUP 2 = IF bite THEN
+  DUP 2 = IF bite crunch THEN
   DUP 3 = IF spr-carrot3 carrot-show THEN
-  DUP 4 = IF z-next THEN
+  DUP 4 = IF z-next snore THEN
   DUP 5 = IF z-clear THEN
   DUP 6 = IF scene-reset THEN
-  7 = IF carrot-clear THEN ;
+  DUP 7 = IF carrot-clear THEN
+  DUP 8 = IF sniff THEN
+  9 = IF chirp THEN ;
 
 \ Drawing is split around vsync so the blit starts as soon as the beam
 \ leaves the screen: all Forth bookkeeping (entry, anchor, rect!) happens
@@ -322,12 +362,12 @@ VARIABLE carrot-was        \ carrot sprite before the last change, 0 = none
 : main  ( -- )
   cg3-init
   snd-setup
-  0 drawn !  0 shown !  0 pending !  0 carrot !  0 zstep !
+  0 drawn !  0 shown !  0 pending !  0 carrot !  0 zstep !  0 noise-left !
   start-x bx !  ground-y by !
   anim-show aptr !  1 ahold !
   BEGIN
     vsync draw-pending snd-frame tick
-    snd-playing? IF 80 snd-fill THEN
+    sound-step
     KEY? 3 =
   UNTIL
   snd-stop
