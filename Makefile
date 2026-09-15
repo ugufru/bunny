@@ -15,10 +15,12 @@ XROAR_EXTRA ?= -kbd-translate
 # and screen.fs with it).
 COCO_LIBS   = bye.fs
 
-NAME = bunny
-SRC  = $(NAME).fs
-BIN  = $(NAME).bin
-GEN  = build/coco-libs.fs
+NAME    = bunny
+SRC     = $(NAME).fs
+BIN     = $(NAME).bin
+GEN     = build/coco-libs.fs
+SPRITES = build/sprites.fs
+PREVIEW = build/preview.png
 
 all: $(BIN)
 
@@ -30,7 +32,16 @@ build:
 $(GEN): Makefile | build
 	printf 'INCLUDE $(COCO)/lib/%s\n' $(COCO_LIBS) > $@
 
-$(BIN): $(SRC) $(GEN) $(KERNEL_MAP) $(KERNEL_BIN)
+# Sprite data and its preview image come from one converter run.
+$(SPRITES): tools/png2cg.py tools/frames.json assets/bunnysheet5.png | build
+	python3 tools/png2cg.py tools/frames.json build
+
+$(PREVIEW): $(SPRITES)
+
+preview: $(PREVIEW)
+	open $(PREVIEW)
+
+$(BIN): $(SRC) $(GEN) $(SPRITES) $(KERNEL_MAP) $(KERNEL_BIN)
 	$(FC) $(SRC) \
 	    --kernel     $(KERNEL_MAP) \
 	    --kernel-bin $(KERNEL_BIN) \
@@ -42,10 +53,10 @@ $(KERNEL_MAP) $(KERNEL_BIN):
 run: $(BIN)
 	xroar -machine coco2bus -ram 32 $(XROAR_ROMS) $(XROAR_EXTRA) -run $(BIN)
 
-cycles: $(SRC) $(GEN) $(KERNEL_MAP)
+cycles: $(SRC) $(GEN) $(SPRITES) $(KERNEL_MAP)
 	$(FC) $(SRC) --kernel $(KERNEL_MAP) --cycles --output build/cycles.bin
 
 clean:
 	rm -rf build $(BIN)
 
-.PHONY: all run cycles clean
+.PHONY: all preview run cycles clean

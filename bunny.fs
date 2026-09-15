@@ -4,6 +4,7 @@
 \ Design notes: PLAN.md. Work tracking: issues.jsonl.
 
 INCLUDE build/coco-libs.fs
+INCLUDE build/sprites.fs
 
 \ CG3 with CSS=1: buff, cyan, magenta, orange.
 \ SAM V=4 (100); $FF22 bits 7-3 = A*/G=1 GM=100 CSS=1.
