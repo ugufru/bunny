@@ -25,7 +25,8 @@ VARIABLE blt-h      \ blit2x / clear-rect scratch: rows left
   cg3-sam-v set-sam-v
   vram-base 9 RSHIFT set-sam-f
   cg3-pia set-pia
-  vram-base cg3-size 0 FILL ;
+  vram-base cg3-size 0 FILL
+  grass  vram-base 80 32 * +  512 CMOVE ;
 
 \ blit2x - draw a sprite record opaque at 2x with its anchor at screen x,y.
 \ The record's top-left lands at (x + 2*ox, y + 2*oy); x must be a multiple
@@ -188,20 +189,72 @@ $7000 CONSTANT wave-base   \ sine wavetable, in the heap below the data stack
   1400 170 10 snd-note  220 snd-slide!  6 snd-env!
   9 snd-ringmod! ;
 
-\ sfx - play effect id (1 = boing).
-: sfx  ( id -- )  1 = IF boing THEN ;
+\ ---- Scene ---------------------------------------------------------------
+\ At 2x the anchor can range 28..84 before a frame leaves the screen. The
+\ bunny sits at start-x, hops once to 56 and eats the carrot at carrot-x,
+\ whose tip is just past the munching nose, stepping right after each bite
+\ (grass fills rows 80-95, below every sprite). Bunny frames are padded 4 px
+\ past their pixels on the right, so their rect overlaps the carrot's by one
+\ byte column; the carrot is redrawn after every bunny draw to cover that.
 
-\ ---- Bunny ---------------------------------------------------------------
-
-28 CONSTANT hop-start-x    \ leftmost anchor with every hop frame on screen
-84 CONSTANT hop-end-x      \ rightmost anchor where hop4 still fits
+28 CONSTANT start-x
 80 CONSTANT ground-y
+88 CONSTANT carrot-x
 
 VARIABLE bx  VARIABLE by   \ bunny anchor (screen pixels)
 VARIABLE drawn             \ true once a frame is on screen
+VARIABLE shown             \ sprite currently on screen
 VARIABLE pending           \ sprite to draw after the next vsync, 0 = none
 VARIABLE aptr              \ current anim entry
 VARIABLE ahold             \ frames left on the current entry
+VARIABLE carrot            \ carrot sprite on screen, 0 = none
+VARIABLE carrot-dirty      \ carrot needs a redraw after vsync
+VARIABLE zstep             \ z shown at position 1..3, 0 = none
+
+VARIABLE carrot-was        \ carrot sprite before the last change, 0 = none
+
+\ carrot-show - put carrot sprite spr on screen after the next vsync.
+: carrot-show  ( spr -- )  carrot @ carrot-was !  carrot !  1 carrot-dirty ! ;
+
+\ bite - step the carrot to its next eaten stage.
+: bite  ( -- )
+  carrot @ spr-carrot3 = IF spr-carrot2 ELSE
+  carrot @ spr-carrot2 = IF spr-carrot1 ELSE spr-carrot0 THEN THEN
+  carrot-show ;
+
+\ z positions rise up and to the right, above the sleeping head.
+: z-x  ( n -- x )  8 * bx @ + ;
+: z-y  ( n -- y )  10 * 46 SWAP - ;
+
+\ z-rect - screen rect of the z at position n.
+: z-rect  ( n -- l t r b )  DUP z-x SWAP z-y >R  DUP R@ 10 -  ROT 16 +  R> ;
+
+\ z-clear - erase the z on screen, if any.
+: z-clear  ( -- )  zstep @ ?DUP IF z-rect clear-rect THEN  0 zstep ! ;
+
+\ z-next - move the z to the next position, wrapping after 3.
+: z-next  ( -- )
+  zstep @ z-clear
+  3 /MOD DROP 1 + DUP zstep !
+  spr-z SWAP DUP z-x SWAP z-y 0 blit2x ;
+
+\ scene-reset - clear the bunny, carrot and z; bunny back to start-x.
+: scene-reset  ( -- )
+  drawn @ IF o-l @ o-t @ o-r @ o-b @ clear-rect THEN
+  0 drawn !  0 shown !
+  carrot @ IF carrot-x ground-y 14 -  carrot-x 32 +  ground-y clear-rect THEN
+  0 carrot !
+  z-clear
+  start-x bx !  ground-y by ! ;
+
+\ event - run an anim entry's event id.
+: event  ( id -- )
+  DUP 1 = IF boing THEN
+  DUP 2 = IF bite THEN
+  DUP 3 = IF spr-carrot3 carrot-show THEN
+  DUP 4 = IF z-next THEN
+  DUP 5 = IF z-clear THEN
+  6 = IF scene-reset THEN ;
 
 \ Drawing is split around vsync so the blit starts as soon as the beam
 \ leaves the screen: all Forth bookkeeping (entry, anchor, rect!) happens
@@ -212,31 +265,45 @@ VARIABLE ahold             \ frames left on the current entry
 \ queue - make spr the frame to draw at the current anchor.
 : queue  ( spr -- )  DUP pending !  bx @ by @ rect! ;
 
-\ draw-pending - right after vsync: blit the queued frame, erase leftovers.
+\ carrot-left - screen x of the left edge of carrot sprite spr. Eaten
+\ stages are trimmed, so they start further right.
+: carrot-left  ( spr -- x )  2 + C@ sx8 2* carrot-x + ;
+
+\ draw-carrot - erase the strip the last bite removed, then blit the carrot.
+: draw-carrot  ( -- )
+  carrot-was @ ?DUP IF
+    carrot-left  ground-y 14 -  carrot @ carrot-left  ground-y  clear-rect
+    0 carrot-was !
+  THEN
+  carrot @ carrot-x ground-y 0 blit2x  0 carrot-dirty ! ;
+
+\ draw-pending - right after vsync: blit the queued frame, erase leftovers,
+\ then redraw the carrot if the bunny covered it or it changed.
 : draw-pending  ( -- )
   pending @ ?DUP IF
     bx @ by @ 0 blit2x
     drawn @ IF erase-uncovered THEN
-    rect>old  1 drawn !  0 pending !
-  THEN ;
-
-\ hop-start - sit the bunny at the left edge and rewind the hop anim.
-: hop-start  ( -- )
-  hop-start-x bx !  ground-y by !
-  anim-hop aptr !  30 ahold !
-  seq-hop spr queue ;
-
-\ advance - read the anim entry at aptr: move the anchor, queue its frame,
-\ start its sound.
-: advance  ( -- )
-  aptr @ C@ 255 = IF
-    bx @ hop-end-x < IF anim-hop aptr ! ELSE hop-start EXIT THEN
+    rect>old  1 drawn !
+    pending @ shown !  0 pending !
+    1 carrot-dirty !
   THEN
+  carrot @ IF carrot-dirty @ IF draw-carrot THEN THEN ;
+
+\ same-frame? - true when the entry at aptr would redraw what is on screen.
+: same-frame?  ( spr -- f )
+  shown @ =
+  aptr @ 1 + C@  aptr @ 2 + C@ OR 0=  AND
+  drawn @ AND ;
+
+\ advance - run the anim entry at aptr: event, move the anchor, queue its
+\ frame unless it is already on screen. anim-show loops forever.
+: advance  ( -- )
+  aptr @ C@ 255 = IF anim-show aptr ! THEN
+  aptr @ 4 + C@ ?DUP IF event THEN
   aptr @ 1 + C@ sx8 bx +!
   aptr @ 2 + C@ sx8 by +!
   aptr @ 3 + C@ ahold !
-  aptr @ 4 + C@ ?DUP IF sfx THEN
-  aptr @ C@ spr queue
+  aptr @ C@ spr DUP same-frame? IF DROP ELSE queue THEN
   aptr @ 5 + aptr ! ;
 
 \ tick - once per frame, before vsync: step the anim when its hold runs out.
@@ -247,8 +314,9 @@ VARIABLE ahold             \ frames left on the current entry
 : main  ( -- )
   cg3-init
   snd-setup
-  0 drawn !  0 pending !
-  hop-start
+  0 drawn !  0 shown !  0 pending !  0 carrot !  0 zstep !
+  start-x bx !  ground-y by !
+  anim-show aptr !  1 ahold !
   BEGIN
     vsync draw-pending snd-frame tick
     snd-playing? IF 80 snd-fill THEN

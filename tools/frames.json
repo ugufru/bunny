@@ -2,11 +2,12 @@
   "sheet": "assets/bunnysheet5.png",
   "baseline_y": 245,
   "cell_w": 32,
+  "colors_doc": "Sheet RGB to 2-bit code. The nose (205,174,103) is mapped to magenta so it reads pink.",
   "colors": {
     "0": [[239, 233, 231], [183, 179, 178]],
     "1": [[58, 55, 55], [130, 124, 124]],
-    "2": [[214, 179, 157], [188, 139, 109], [196, 145, 114]],
-    "3": [[205, 174, 103]]
+    "2": [[214, 179, 157], [188, 139, 109], [196, 145, 114], [205, 174, 103]],
+    "3": []
   },
   "preview_rgb_doc": "CSS=1 colors as XRoar renders them (sampled from a live window capture).",
   "preview_rgb": [[255, 255, 255], [88, 170, 120], [236, 102, 248], [238, 121, 74]],
@@ -22,26 +23,78 @@
     {"name": "wiggle",  "art": "assets/extra/wiggle.txt",  "like": "hop1"},
     {"name": "yawn",    "art": "assets/extra/yawn.txt",    "like": "hop1"},
     {"name": "sleep",   "art": "assets/extra/sleep.txt",   "like": "munch4"},
-    {"name": "carrot3", "art": "assets/extra/carrot3.txt", "ox": 0, "oy": -7},
-    {"name": "carrot2", "art": "assets/extra/carrot2.txt", "ox": 0, "oy": -7},
-    {"name": "carrot1", "art": "assets/extra/carrot1.txt", "ox": 0, "oy": -7},
-    {"name": "carrot0", "art": "assets/extra/carrot0.txt", "ox": 0, "oy": -7},
+    {"name": "carrot3", "art": "assets/extra/carrot3.txt", "ox": 0, "oy": -7, "trim": true},
+    {"name": "carrot2", "art": "assets/extra/carrot2.txt", "ox": 0, "oy": -7, "trim": true},
+    {"name": "carrot1", "art": "assets/extra/carrot1.txt", "ox": 0, "oy": -7, "trim": true},
+    {"name": "carrot0", "art": "assets/extra/carrot0.txt", "ox": 0, "oy": -7, "trim": true},
     {"name": "z",       "art": "assets/extra/z.txt",       "ox": 0, "oy": -5}
   ],
-  "art_doc": "art frames are ASCII pixel maps (. or w = buff, c = cyan, m = magenta, o = orange; # lines are comments). like = use that sheet frame's anchor offset; otherwise ox/oy give the top-left offset from the anchor in 1x pixels.",
+  "art_doc": "art frames are ASCII pixel maps (. or w = buff, c = cyan, m = magenta, o = orange; # lines are comments). like = use that sheet frame's anchor offset; otherwise ox/oy give the top-left offset from the anchor in 1x pixels. trim drops empty columns at both ends and moves ox to match, so an eaten carrot's rect covers only what is left.",
   "sequences": {
     "hop":    ["hop1", "hop2", "hop3", "hop4"],
     "munch":  ["munch1", "munch2", "munch3", "munch4"],
     "rest":   ["hop1", "wiggle", "yawn", "sleep"],
     "carrot": ["carrot3", "carrot2", "carrot1", "carrot0", "z"]
   },
-  "anims_doc": "Each entry: [frame, dx, dy, frames to hold, sfx id]. dx and dy are 2x screen pixels applied before the frame is drawn; dx must be a multiple of 4. One hop cycle carries the nose 14 px at 1x (10, 10, 15, 24), so the return to hop1 moves the anchor +28.",
+  "grass_doc": "Grass strip for the bottom screen rows, at 1x (CG3 pixels): rows tall, base solid rows, blade density per step, fixed seed so it never changes between builds.",
+  "grass": {"rows": 16, "base": 2, "density": 0.55, "seed": 3},
+  "anims_doc": "Each entry: [frame, dx, dy, frames to hold, event id], or \"@name\" to splice in another anim. dx and dy are 2x screen pixels applied before the frame is drawn; dx must be a multiple of 4. Events run before the move: 1 boing, 2 carrot bite, 3 carrot appears, 4 next z, 5 clear z, 6 scene reset (clear everything, bunny back to start-x). One hop cycle carries the nose 14 px at 1x (10, 10, 15, 24), so the return to hop1 moves the anchor +28. While eating, the bunny steps right after each bite by about what the bite removed from the carrot tip (+8, +12, +4), ending at anchor 80. bunny.fs plays anim-show on a loop.",
   "anims": {
+    "sit": [
+      ["hop1", 0, 0, 60, 6]
+    ],
+    "wiggle": [
+      ["wiggle", 0, 0, 5, 0],
+      ["hop1",   0, 0, 5, 0],
+      ["wiggle", 0, 0, 5, 0],
+      ["hop1",   0, 0, 30, 0]
+    ],
     "hop": [
       ["hop2", 0,  0, 6,  1],
       ["hop3", 0,  0, 6,  0],
       ["hop4", 0,  0, 6,  0],
       ["hop1", 28, 0, 24, 0]
+    ],
+    "carrot": [
+      ["hop1", 0, 0, 40, 3]
+    ],
+    "eat": [
+      ["munch1", 0,  0, 6,  0],
+      ["munch2", 0,  0, 6,  0],
+      ["munch3", 0,  0, 6,  0],
+      ["munch4", 0,  0, 14, 2],
+      ["munch3", 8,  0, 8,  0],
+      ["munch4", 0,  0, 14, 2],
+      ["munch3", 12, 0, 8,  0],
+      ["munch4", 0,  0, 14, 2],
+      ["munch3", 4,  0, 8,  0],
+      ["munch2", 0,  0, 8,  0],
+      ["munch1", 0,  0, 8,  0],
+      ["hop1",   0,  0, 30, 0]
+    ],
+    "yawn": [
+      ["yawn", 0, 0, 40, 0],
+      ["hop1", 0, 0, 20, 0]
+    ],
+    "doze": [
+      ["munch2", 0, 0, 8, 0],
+      ["munch3", 0, 0, 8, 0]
+    ],
+    "zzz": [
+      ["sleep", 0, 0, 25, 4],
+      ["sleep", 0, 0, 25, 4],
+      ["sleep", 0, 0, 25, 4],
+      ["sleep", 0, 0, 20, 5]
+    ],
+    "wake": [
+      ["munch3", 0, 0, 8,  0],
+      ["munch1", 0, 0, 8,  0],
+      ["hop1",   0, 0, 20, 0],
+      "@wiggle"
+    ],
+    "show": [
+      "@sit", "@wiggle", "@hop", "@carrot", "@eat", "@yawn",
+      "@doze", "@zzz", "@zzz", "@zzz", "@wake"
     ]
   }
 }

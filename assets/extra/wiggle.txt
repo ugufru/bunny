@@ -1,4 +1,4 @@
-# wiggle - hop1 (sitting) with the nose twitched up one pixel.
+# wiggle - hop1 (sitting) with the nose (pink) twitched up one pixel.
 # . = transparent (buff), w = buff body, c = cyan, m = magenta, o = orange
 .........ccc..cc.........
 .........cwcc.cwc........
@@ -14,7 +14,7 @@
 .....cccwwwwcwwwwwcwwwc..
 ....cwwwwwwwcwwwwccwwwwc.
 ...cwwwwwwwwwwwwwwwwwwwcc
-..ccwwwwwwwwwwwwwwwwwwooc
+..ccwwwwwwwwwwwwwwwwwwmmc
 ..cwwwwwwwwwwwcwwwwwwcwwc
 .ccwwwwwwwwwwwwccwwwwwcc.
 .cwwwwwwwwwwwwwwwccwccc..

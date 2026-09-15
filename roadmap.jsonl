@@ -1,0 +1,2 @@
+{"rank": 1, "id": 8, "why": "Closes the loop so the scene reset stops teleporting the bunny back to the left; depends on #7's scene layout.", "added": "2026-09-14"}
+{"rank": 2, "id": 9, "why": "Sound polish for the finished show; needs #7's event ids to hang sniff, crunch and snore on.", "added": "2026-09-14"}
