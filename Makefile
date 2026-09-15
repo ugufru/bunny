@@ -53,6 +53,20 @@ $(KERNEL_MAP) $(KERNEL_BIN):
 run: $(BIN)
 	xroar -machine coco2bus -ram 32 $(XROAR_ROMS) $(XROAR_EXTRA) -run $(BIN)
 
+# Headless capture: run with no window or audio, trap at the first N-th call
+# of the kernel vsync (SHOT_AT, default 1), dump RAM and render the CG3 page
+# to build/shot.png. Works when the XRoar window is on another Space.
+SHOT_AT ?= 1
+VSYNC_PC = $(shell awk '/Symbol: CODE_VSYNC /{print $$NF}' $(KERNEL_MAP))
+
+shot: $(BIN)
+	rm -f build/shot.ram
+	perl -e 'alarm 60; exec @ARGV' xroar -machine coco2bus -ram 32 $(XROAR_ROMS) \
+	    -ui null -ao null -run $(BIN) \
+	    -trap pc=0x$(VSYNC_PC) -trap-range $(SHOT_AT) \
+	    -trap-snap build/shot.ram -trap-timeout 1 -timeout 50 > build/shot.log 2>&1
+	python3 tools/cg3shot.py build/shot.ram build/shot.png
+
 cycles: $(SRC) $(GEN) $(SPRITES) $(KERNEL_MAP)
 	$(FC) $(SRC) --kernel $(KERNEL_MAP) --cycles --output build/cycles.bin
 
