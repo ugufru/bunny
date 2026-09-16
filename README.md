@@ -61,6 +61,8 @@ make clean
 - `tools/cg3shot.py`: renders a CG3 page from an XRoar RAM dump (used by
   `make shot`).
 - `PLAN.md`: the original design notes.
+- `RETROSPECTIVE.md`: how the demo got built in one session, what worked and
+  what did not.
 - `issues.jsonl`, `roadmap.jsonl`, `issues.html`: work tracking.
 - `CREDITS.md`: art attribution and licenses.
 
